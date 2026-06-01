@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Code → Bar Heights</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f5f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 540px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 18px; font-weight: 600; color: #111; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; line-height: 1.5; }
+  label { display: block; font-size: 12px; font-weight: 500; color: #555;
+          margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 0.75rem; }
+  input[type="text"] {
+    flex: 1; border: 1.5px solid #e0e0e0; border-radius: 10px;
+    padding: 10px 14px; font-size: 14px; color: #111; outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: #1DB954; }
+  button.primary {
+    background: #1DB954; color: white; border: none; border-radius: 10px;
+    padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    white-space: nowrap; transition: background 0.15s;
+  }
+  button.primary:hover { background: #17a349; }
+  button.primary:disabled { background: #ccc; cursor: default; }
+  .status { font-size: 13px; color: #888; min-height: 20px; margin-bottom: 1rem; }
+  .status.error { color: #e53935; }
+  .preview-box {
+    background: #111; border-radius: 12px; padding: 12px;
+    margin-bottom: 1rem; display: none; text-align: center;
+  }
+  .preview-box img { max-width: 100%; border-radius: 6px; }
+  .result-box { display: none; }
+  .result-label { font-size: 12px; font-weight: 500; color: #555;
+                  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .code-block {
+    background: #111; color: #1DB954; font-family: "SF Mono","Fira Code",monospace;
+    font-size: 13px; border-radius: 10px; padding: 14px 16px;
+    white-space: nowrap; overflow-x: auto; margin-bottom: 10px;
+  }
+  .copy-btn {
+    background: #222; color: #ccc; border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 12px; font-weight: 500; cursor: pointer;
+    width: 100%; transition: background 0.15s;
+  }
+  .copy-btn:hover { background: #333; }
+  .copy-btn.copied { background: #1DB954; color: white; }
+  .bars-viz {
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 48px; margin: 12px 0; padding: 8px 12px;
+    background: #111; border-radius: 8px;
+  }
+  .bar-v { flex: 1; background: white; border-radius: 2px 2px 0 0; min-height: 3px; }
+  .how-to {
+    background: #f9f9f9; border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 1.25rem; font-size: 13px; color: #555; line-height: 1.7;
+  }
+  .how-to strong { color: #111; }
+  .how-to a { color: #1DB954; text-decoration: none; }
+  .how-to a:hover { text-decoration: underline; }
+  .algo-note { font-size: 11px; color: #bbb; margin-top: 10px; line-height: 1.6; }
+  canvas { display: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Spotify Code → Bar Heights</h1>
+  <p class="subtitle">
+    Extracts the 23 bar heights from the official Spotify code image.<br>
+    Paste the heights into <code>spotify_code.scad</code> to 3D print your plaque.
+  </p>
+
+  <div class="how-to">
+    <strong>How to get your Spotify link:</strong><br>
+    In Spotify: right-click any track, album, playlist or artist
+    → <strong>Share</strong> → <strong>Copy link</strong><br><br>
+    Works for: tracks · albums · playlists · artists · podcasts
+  </div>
+
+  <label for="urlInput">Spotify link</label>
+  <div class="input-row">
+    <input type="text" id="urlInput"
+      placeholder="https://open.spotify.com/track/..." />
+    <button class="primary" id="goBtn" onclick="extract()">Extract</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="preview-box" id="previewBox">
+    <img id="previewImg" crossorigin="anonymous" alt="Spotify code" />
+  </div>
+
+  <div class="result-box" id="resultBox">
+    <div class="result-label">Paste this into spotify_code.scad</div>
+    <div class="code-block" id="codeBlock"></div>
+    <button class="copy-btn" id="copyBtn" onclick="copyResult()">
+      Copy to clipboard
+    </button>
+    <div class="bars-viz" id="barsViz"></div>
+    <p class="algo-note">
+      Algorithm: logo diameter = tallest bar height (reference).
+      Each bar's height ÷ logo diameter × 8, floored, − 1 → octal 0–7.<br>
+      Method by Peter Boone · boonepeter.github.io/posts/2020-11-10-spotify-codes
+    </p>
+  </div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+function parseUri(raw) {
+  raw = raw.trim();
+  if (raw.startsWith('spotify:')) return raw;
+  const m = raw.match(/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)/);
+  if (m) return `spotify:${m[1]}:${m[2]}`;
+  return null;
+}
+
+function setStatus(msg, isError) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (isError ? ' error' : '');
+}
+
+async function extract() {
+  const raw = document.getElementById('urlInput').value;
+  const uri = parseUri(raw);
+
+  document.getElementById('resultBox').style.display = 'none';
+  document.getElementById('previewBox').style.display = 'none';
+
+  if (!uri) { setStatus('Could not read that as a Spotify link.', true); return; }
+
+  document.getElementById('goBtn').disabled = true;
+  setStatus('Loading Spotify code image…');
+
+  // Black background, white bars — best contrast for extraction.
+  // Logo diameter = tallest bar height (the reference scale).
+  const imgUrl = `https://scannables.scdn.co/uri/plain/jpeg/000000/white/640/${uri}`;
+
+  try {
+    const bars = await extractBars(imgUrl);
+    showResult(bars, imgUrl);
+    setStatus('');
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    document.getElementById('goBtn').disabled = false;
+  }
+}
+
+function extractBars(imgUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const canvas = document.getElementById('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, W, H).data;
+
+      // ── Threshold: pixels with R > 128 are "white" (bar/logo) ──
+      const isBright = (x, y) => data[(y * W + x) * 4] > 128;
+
+      // ── Find connected white regions (simplified connected-components) ──
+      // Build column-brightness profile first to locate objects
+      // Then for each object, find its bounding box via flood-fill seeds
+
+      // Step 1: build per-column bright-pixel count
+      const colH = new Int32Array(W);
+      for (let x = 0; x < W; x++)
+        for (let y = 0; y < H; y++)
+          if (isBright(x, y)) colH[x]++;
+
+      // Step 2: find object column spans (runs of columns with bright pixels)
+      const spans = [];
+      let inSpan = false, spanStart = 0;
+      for (let x = 0; x < W; x++) {
+        if (colH[x] > 0 && !inSpan) { inSpan = true; spanStart = x; }
+        else if (colH[x] === 0 && inSpan) { inSpan = false; spans.push([spanStart, x - 1]); }
+      }
+      if (inSpan) spans.push([spanStart, W - 1]);
+
+      // Step 3: for each span, measure the vertical extent of bright pixels
+      const objects = spans.map(([x0, x1]) => {
+        let minY = H, maxY = 0;
+        for (let x = x0; x <= x1; x++)
+          for (let y = 0; y < H; y++)
+            if (isBright(x, y)) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+        return { x0, x1, minY, maxY, height: maxY - minY + 1, width: x1 - x0 + 1 };
+      });
+
+      // Sort by x position (left to right)
+      objects.sort((a, b) => a.x0 - b.x0);
+
+      // The first object is the Spotify logo (roughly square, tallest)
+      // Filter to only objects that look like bars or logo (not tiny noise)
+      const meaningful = objects.filter(o => o.height > H * 0.05 && o.width > 2);
+
+      if (meaningful.length < 24) {
+        reject(new Error(`Only found ${meaningful.length} objects — expected 24 (logo + 23 bars). Try again.`));
+        return;
+      }
+
+      const logo = meaningful[0];
+      const maxHeight = logo.height; // logo diameter = tallest bar height
+
+      // Peter Boone's exact formula:
+      const sequence = meaningful.slice(1).map(bar => {
+        const ratio = (bar.height / maxHeight) * 8;
+        return Math.floor(ratio) - 1;
+      });
+
+      // Validate: should be exactly 23 bars, first=0, 12th=7, last=0
+      if (sequence.length !== 23) {
+        reject(new Error(`Got ${sequence.length} bars, expected 23. The image may not be a standard Spotify code.`));
+        return;
+      }
+      if (sequence[0] !== 0 || sequence[11] !== 7 || sequence[22] !== 0) {
+        reject(new Error(
+          `Reference bars don't match (pos 0=${sequence[0]}, pos 11=${sequence[11]}, pos 22=${sequence[22]}).\n` +
+          `Expected 0, 7, 0. The link may not be supported.`
+        ));
+        return;
+      }
+
+      resolve(sequence);
+    };
+
+    img.onerror = () => reject(new Error(
+      'Could not load the Spotify code image.\n' +
+      'This can happen with some browsers due to CORS. Try Chrome or Firefox.'
+    ));
+    img.src = imgUrl;
+  });
+}
+
+function showResult(bars, imgUrl) {
+  document.getElementById('codeBlock').textContent = `BAR_HEIGHTS = [${bars.join(', ')}];`;
+  document.getElementById('resultBox').style.display = 'block';
+
+  // Preview image (normal black-on-white)
+  const prev = document.getElementById('previewImg');
+  prev.src = imgUrl.replace('/000000/white/', '/ffffff/black/');
+  document.getElementById('previewBox').style.display = 'block';
+
+  // Mini bar visualisation
+  const viz = document.getElementById('barsViz');
+  viz.innerHTML = '';
+  bars.forEach(h => {
+    const bar = document.createElement('div');
+    bar.className = 'bar-v';
+    bar.style.height = ((h + 1) / 8 * 100) + '%';
+    viz.appendChild(bar);
+  });
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(document.getElementById('codeBlock').textContent).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy to clipboard'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') extract();
+});
+</script>
+</body>
+</html>
