@@ -3,125 +3,345 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify Code → Bar Heights</title>
+<title>Spotify Code Generator — 3D Print Tool</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f5f5f5;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-  }
-  .card {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 540px;
-    width: 100%;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  }
-  h1 { font-size: 18px; font-weight: 600; color: #111; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: #888; margin-bottom: 1.5rem; line-height: 1.5; }
-  label { display: block; font-size: 12px; font-weight: 500; color: #555;
-          margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .input-row { display: flex; gap: 8px; margin-bottom: 0.75rem; }
-  input[type="text"] {
-    flex: 1; border: 1.5px solid #e0e0e0; border-radius: 10px;
-    padding: 10px 14px; font-size: 14px; color: #111; outline: none;
-    transition: border-color 0.15s;
-  }
-  input[type="text"]:focus { border-color: #1DB954; }
-  button.primary {
-    background: #1DB954; color: white; border: none; border-radius: 10px;
-    padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
-    white-space: nowrap; transition: background 0.15s;
-  }
-  button.primary:hover { background: #17a349; }
-  button.primary:disabled { background: #ccc; cursor: default; }
-  .status { font-size: 13px; color: #888; min-height: 20px; margin-bottom: 1rem; }
-  .status.error { color: #e53935; }
-  .preview-box {
-    background: #111; border-radius: 12px; padding: 12px;
-    margin-bottom: 1rem; display: none; text-align: center;
-  }
-  .preview-box img { max-width: 100%; border-radius: 6px; }
-  .result-box { display: none; }
-  .result-label { font-size: 12px; font-weight: 500; color: #555;
-                  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-  .code-block {
-    background: #111; color: #1DB954; font-family: "SF Mono","Fira Code",monospace;
-    font-size: 13px; border-radius: 10px; padding: 14px 16px;
-    white-space: nowrap; overflow-x: auto; margin-bottom: 10px;
-  }
-  .copy-btn {
-    background: #222; color: #ccc; border: none; border-radius: 8px;
-    padding: 8px 16px; font-size: 12px; font-weight: 500; cursor: pointer;
-    width: 100%; transition: background 0.15s;
-  }
-  .copy-btn:hover { background: #333; }
-  .copy-btn.copied { background: #1DB954; color: white; }
-  .bars-viz {
-    display: flex; align-items: flex-end; gap: 3px;
-    height: 48px; margin: 12px 0; padding: 8px 12px;
-    background: #111; border-radius: 8px;
-  }
-  .bar-v { flex: 1; background: white; border-radius: 2px 2px 0 0; min-height: 3px; }
-  .how-to {
-    background: #f9f9f9; border-radius: 10px; padding: 14px 16px;
-    margin-bottom: 1.25rem; font-size: 13px; color: #555; line-height: 1.7;
-  }
-  .how-to strong { color: #111; }
-  .how-to a { color: #1DB954; text-decoration: none; }
-  .how-to a:hover { text-decoration: underline; }
-  .algo-note { font-size: 11px; color: #bbb; margin-top: 10px; line-height: 1.6; }
-  canvas { display: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, sans-serif;
+  background: #0a0a0a;
+  color: #f0f0f0;
+  min-height: 100vh;
+  padding: 2rem 1rem 4rem;
+}
+
+.page { max-width: 620px; margin: 0 auto; }
+
+/* ── Header ── */
+.header { text-align: center; padding: 2rem 0 2.5rem; }
+.logo-mark {
+  width: 52px; height: 52px; background: #1DB954;
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 1rem;
+}
+.logo-mark svg { width: 30px; height: 30px; }
+h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 6px; }
+.tagline { font-size: 14px; color: #888; line-height: 1.5; }
+
+/* ── Steps ── */
+.step {
+  background: #161616;
+  border: 1px solid #252525;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 12px;
+}
+.step-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 1rem;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #1DB954; color: #000;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-title { font-size: 15px; font-weight: 600; }
+.step-body { font-size: 13px; color: #aaa; line-height: 1.7; }
+.step-body strong { color: #f0f0f0; font-weight: 500; }
+
+/* ── How-to illustration ── */
+.howto-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px; margin-top: 1rem;
+}
+.howto-card {
+  background: #1a1a1a; border: 1px solid #2a2a2a;
+  border-radius: 10px; padding: 12px 10px; text-align: center;
+}
+.howto-icon {
+  width: 44px; height: 44px; background: #222; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px; font-size: 22px;
+}
+.howto-label { font-size: 11px; color: #888; line-height: 1.4; }
+.howto-label strong { display: block; color: #ddd; font-size: 12px; margin-bottom: 2px; }
+.arrow-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; margin: 8px 0 0;
+}
+.arrow-chip {
+  background: #222; border: 1px solid #333; border-radius: 6px;
+  padding: 4px 10px; font-size: 12px; color: #ccc;
+  display: flex; align-items: center; gap: 5px;
+}
+.arrow-sep { color: #444; font-size: 16px; }
+
+/* ── Mockup image of Spotify share flow ── */
+.mockup {
+  background: #1a1a1a; border: 1px solid #2a2a2a;
+  border-radius: 12px; overflow: hidden; margin-top: 12px;
+}
+.mockup-titlebar {
+  background: #111; padding: 8px 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.mockup-dots { display: flex; gap: 5px; }
+.mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+.mockup-title { font-size: 11px; color: #555; margin-left: 4px; }
+.mockup-body { padding: 12px 14px; }
+
+.track-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px; background: #222; border-radius: 8px; margin-bottom: 10px;
+}
+.track-art {
+  width: 38px; height: 38px; border-radius: 4px; background: #1DB954;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 18px;
+}
+.track-info { flex: 1; }
+.track-name { font-size: 13px; font-weight: 500; }
+.track-artist { font-size: 11px; color: #888; margin-top: 1px; }
+
+.context-menu {
+  background: #2a2a2a; border-radius: 8px; overflow: hidden;
+  border: 1px solid #333;
+}
+.menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; font-size: 12px; color: #ccc;
+  border-bottom: 1px solid #333;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item.active { background: #333; color: #fff; }
+.menu-item.highlight { background: #1a2e1a; color: #1DB954; }
+.menu-icon { font-size: 14px; width: 18px; text-align: center; }
+.submenu-arrow { margin-left: auto; color: #555; font-size: 10px; }
+
+.url-chip {
+  background: #111; border: 1px solid #1DB954; border-radius: 8px;
+  padding: 10px 14px; font-size: 11px; color: #1DB954;
+  font-family: monospace; margin-top: 10px; word-break: break-all;
+  display: flex; align-items: center; gap: 8px;
+}
+.url-chip-icon { font-size: 16px; flex-shrink: 0; }
+
+/* ── Input area ── */
+.input-wrap { position: relative; margin-top: 12px; }
+.input-wrap input {
+  width: 100%; background: #111; border: 1.5px solid #2a2a2a;
+  border-radius: 12px; padding: 13px 130px 13px 16px;
+  font-size: 14px; color: #f0f0f0; outline: none;
+  transition: border-color 0.15s;
+}
+.input-wrap input::placeholder { color: #444; }
+.input-wrap input:focus { border-color: #1DB954; }
+.input-wrap button {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  background: #1DB954; color: #000; border: none; border-radius: 8px;
+  padding: 8px 18px; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: background 0.15s; white-space: nowrap;
+}
+.input-wrap button:hover { background: #1ed760; }
+.input-wrap button:disabled { background: #333; color: #666; cursor: default; }
+
+.status { font-size: 13px; color: #888; min-height: 20px; margin-top: 8px; padding: 0 2px; }
+.status.err { color: #f44336; }
+.status.ok { color: #1DB954; }
+
+/* ── Preview ── */
+.preview-wrap {
+  background: #111; border-radius: 12px; padding: 16px;
+  margin-top: 16px; display: none; text-align: center;
+}
+.preview-wrap img { max-width: 100%; border-radius: 6px; display: block; margin: 0 auto; }
+.preview-label { font-size: 11px; color: #555; margin-top: 8px; }
+
+/* ── Result ── */
+.result-wrap { margin-top: 16px; display: none; }
+.result-heading {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #555; margin-bottom: 8px;
+}
+
+/* Viz */
+.viz {
+  display: flex; align-items: flex-end; gap: 3px;
+  height: 56px; background: #000; border-radius: 10px 10px 0 0;
+  padding: 8px 16px 0;
+}
+.viz-bar {
+  flex: 1; background: white; border-radius: 2px 2px 0 0; min-height: 3px;
+}
+
+/* Copy blocks */
+.copy-block { margin-top: 2px; }
+.copy-block + .copy-block { margin-top: 8px; }
+
+.copy-row {
+  display: flex; align-items: stretch; gap: 0;
+  background: #111; border: 1px solid #252525; border-radius: 10px;
+  overflow: hidden;
+}
+.copy-label {
+  font-size: 11px; color: #555; background: #161616;
+  padding: 10px 12px; white-space: nowrap; display: flex;
+  align-items: center; border-right: 1px solid #252525;
+  font-weight: 500; letter-spacing: 0.03em; text-transform: uppercase;
+  min-width: 80px;
+}
+.copy-value {
+  flex: 1; font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 12px; color: #1DB954; padding: 10px 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: flex; align-items: center;
+}
+.copy-btn {
+  background: transparent; border: none; border-left: 1px solid #252525;
+  color: #666; font-size: 12px; padding: 0 14px;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+.copy-btn:hover { background: #1a1a1a; color: #ddd; }
+.copy-btn.copied { color: #1DB954; }
+
+.note {
+  font-size: 11px; color: #444; margin-top: 14px; line-height: 1.7; text-align: center;
+}
+.note a { color: #555; text-decoration: none; }
+.note a:hover { color: #888; }
+
+canvas { display: none; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>Spotify Code → Bar Heights</h1>
-  <p class="subtitle">
-    Extracts the 23 bar heights from the official Spotify code image.<br>
-    Paste the heights into <code>spotify_code.scad</code> to 3D print your plaque.
-  </p>
+<div class="page">
 
-  <div class="how-to">
-    <strong>How to get your Spotify link:</strong><br>
-    In Spotify: right-click any track, album, playlist or artist
-    → <strong>Share</strong> → <strong>Copy link</strong><br><br>
-    Works for: tracks · albums · playlists · artists · podcasts
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 168 168" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M84 0C37.6 0 0 37.6 0 84s37.6 84 84 84 84-37.6 84-84S130.4 0 84 0zm38.4 121.1c-1.5 2.5-4.7 3.2-7.2 1.7-19.7-12-44.4-14.7-73.6-8.1-2.8.6-5.6-1.1-6.2-3.9-.6-2.8 1.1-5.6 3.9-6.2 31.9-7.3 59.3-4.2 81.3 9.3 2.5 1.5 3.3 4.7 1.8 7.2zm10.2-22.8c-1.9 3.1-5.9 4-9 2.2-22.5-13.8-56.8-17.8-83.4-9.8-3.5 1-7.1-.9-8.1-4.4-1-3.5.9-7.1 4.4-8.1 30.4-9.2 68.2-4.8 94.1 11.1 3 1.9 4 5.9 2 9zm.9-23.7c-27-16-71.5-17.5-97.3-9.7-4.1 1.3-8.5-1.1-9.8-5.2-1.3-4.1 1.1-8.5 5.2-9.8 29.6-9 78.8-7.2 109.8 11.2 3.7 2.2 4.9 7 2.7 10.7-2.2 3.7-7 4.9-10.6 2.8z"/>
+      </svg>
+    </div>
+    <h1>Spotify Code — 3D Print Tool</h1>
+    <p class="tagline">Get the code string for your Spotify track, album or playlist.<br>Paste it into the OpenSCAD model to generate your plaque.</p>
   </div>
 
-  <label for="urlInput">Spotify link</label>
-  <div class="input-row">
-    <input type="text" id="urlInput"
-      placeholder="https://open.spotify.com/track/..." />
-    <button class="primary" id="goBtn" onclick="extract()">Extract</button>
+  <!-- Step 1: Get Spotify link -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">1</div>
+      <div class="step-title">Copy your Spotify link</div>
+    </div>
+    <div class="step-body">
+      Open Spotify and find your track, album, playlist or artist.
+      Right-click (desktop) or tap the <strong>···</strong> menu (mobile), then follow the path below.
+    </div>
+
+    <!-- Arrow path illustration -->
+    <div class="arrow-row" style="margin-top:14px; flex-wrap:wrap;">
+      <div class="arrow-chip">🖱 Right-click track</div>
+      <div class="arrow-sep">›</div>
+      <div class="arrow-chip">Share</div>
+      <div class="arrow-sep">›</div>
+      <div class="arrow-chip" style="color:#1DB954; border-color:#1DB954;">Copy link to track</div>
+    </div>
+
+    <!-- Mockup -->
+    <div class="mockup" style="margin-top:14px;">
+      <div class="mockup-titlebar">
+        <div class="mockup-dots">
+          <div class="mockup-dot" style="background:#e74c3c;"></div>
+          <div class="mockup-dot" style="background:#f39c12;"></div>
+          <div class="mockup-dot" style="background:#2ecc71;"></div>
+        </div>
+        <div class="mockup-title">Spotify</div>
+      </div>
+      <div class="mockup-body">
+        <div class="track-row">
+          <div class="track-art">🎵</div>
+          <div class="track-info">
+            <div class="track-name">Your favourite track</div>
+            <div class="track-artist">Artist name · Album</div>
+          </div>
+          <div style="font-size:18px; color:#555;">···</div>
+        </div>
+        <div class="context-menu">
+          <div class="menu-item"><span class="menu-icon">➕</span> Add to playlist <span class="submenu-arrow">›</span></div>
+          <div class="menu-item"><span class="menu-icon">❤️</span> Save to Liked Songs</div>
+          <div class="menu-item active"><span class="menu-icon">↗</span> Share <span class="submenu-arrow">›</span>
+            <div style="display:flex; gap:6px; margin-left:auto;">
+              <div style="background:#333; border-radius:4px; padding:2px 8px; font-size:10px;">Copy link to track</div>
+            </div>
+          </div>
+          <div class="menu-item"><span class="menu-icon">ℹ️</span> Show credits</div>
+        </div>
+        <div class="url-chip">
+          <span class="url-chip-icon">🔗</span>
+          <span>https://open.spotify.com/track/<strong style="color:#4ade80;">4iV5W9uYEdYUVa79Ozker5</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-body" style="margin-top:12px;">
+      <strong>On mobile:</strong> tap <strong>···</strong> next to the track → <strong>Share</strong> → <strong>Copy link</strong>
+    </div>
   </div>
 
-  <div class="status" id="status"></div>
+  <!-- Step 2: Paste & extract -->
+  <div class="step">
+    <div class="step-header">
+      <div class="step-num">2</div>
+      <div class="step-title">Paste your link and extract</div>
+    </div>
+    <div class="step-body">Works for tracks, albums, playlists and artists.</div>
+    <div class="input-wrap" style="margin-top:12px;">
+      <input type="text" id="urlInput" placeholder="https://open.spotify.com/track/…" />
+      <button id="goBtn" onclick="extract()">Extract</button>
+    </div>
+    <div class="status" id="status"></div>
 
-  <div class="preview-box" id="previewBox">
-    <img id="previewImg" crossorigin="anonymous" alt="Spotify code" />
+    <div class="preview-wrap" id="previewBox">
+      <img id="previewImg" crossorigin="anonymous" alt="Your Spotify code" />
+      <div class="preview-label">Your Spotify code — verified ✓</div>
+    </div>
   </div>
 
-  <div class="result-box" id="resultBox">
-    <div class="result-label">Paste this into spotify_code.scad</div>
-    <div class="code-block" id="codeBlock"></div>
-    <button class="copy-btn" id="copyBtn" onclick="copyResult()">
-      Copy to clipboard
-    </button>
-    <div class="bars-viz" id="barsViz"></div>
-    <p class="algo-note">
-      Algorithm: logo diameter = tallest bar height (reference).
-      Each bar's height ÷ logo diameter × 8, floored, − 1 → octal 0–7.<br>
-      Method by Peter Boone · boonepeter.github.io/posts/2020-11-10-spotify-codes
-    </p>
+  <!-- Step 3: Copy result -->
+  <div class="step" id="resultStep" style="display:none;">
+    <div class="step-header">
+      <div class="step-num">3</div>
+      <div class="step-title">Copy into OpenSCAD</div>
+    </div>
+    <div class="step-body" style="margin-bottom:14px;">
+      Copy the 23-digit code below and paste it into the <strong>Code_String</strong>
+      parameter in <strong>spotify_code.scad</strong>.
+    </div>
+
+    <!-- Bar visualisation -->
+    <div class="viz" id="viz"></div>
+
+    <!-- Digits only -->
+    <div class="result-heading" style="margin-top:14px;">Your 23-digit code — copy and paste into OpenSCAD</div>
+    <div class="copy-block">
+      <div class="copy-row">
+        <div class="copy-value" id="digitsOnly" style="font-size:15px; letter-spacing:0.05em;"></div>
+        <button class="copy-btn" id="copyDigits" onclick="copyText('digitsOnly','copyDigits')">
+          📋 Copy
+        </button>
+      </div>
+    </div>
+
+    <div class="note">
+      Algorithm by <a href="https://boonepeter.github.io/posts/2020-11-10-spotify-codes/" target="_blank">Peter Boone</a> ·
+      Logo diameter = max bar height (reference scale) ·
+      Each bar: ⌊height / logo_h × 8⌋ − 1
+    </div>
   </div>
-</div>
+
+</div><!-- /page -->
 
 <canvas id="canvas"></canvas>
 
@@ -130,38 +350,29 @@ function parseUri(raw) {
   raw = raw.trim();
   if (raw.startsWith('spotify:')) return raw;
   const m = raw.match(/open\.spotify\.com\/([a-z]+)\/([A-Za-z0-9]+)/);
-  if (m) return `spotify:${m[1]}:${m[2]}`;
-  return null;
+  return m ? `spotify:${m[1]}:${m[2]}` : null;
 }
 
-function setStatus(msg, isError) {
+function status(msg, cls) {
   const el = document.getElementById('status');
   el.textContent = msg;
-  el.className = 'status' + (isError ? ' error' : '');
+  el.className = 'status' + (cls ? ' ' + cls : '');
 }
 
 async function extract() {
-  const raw = document.getElementById('urlInput').value;
-  const uri = parseUri(raw);
-
-  document.getElementById('resultBox').style.display = 'none';
+  const uri = parseUri(document.getElementById('urlInput').value);
+  document.getElementById('resultStep').style.display = 'none';
   document.getElementById('previewBox').style.display = 'none';
-
-  if (!uri) { setStatus('Could not read that as a Spotify link.', true); return; }
-
+  if (!uri) { status('Could not read that as a Spotify link.', 'err'); return; }
   document.getElementById('goBtn').disabled = true;
-  setStatus('Loading Spotify code image…');
-
-  // Black background, white bars — best contrast for extraction.
-  // Logo diameter = tallest bar height (the reference scale).
+  status('Loading Spotify code image…');
   const imgUrl = `https://scannables.scdn.co/uri/plain/jpeg/000000/white/640/${uri}`;
-
   try {
     const bars = await extractBars(imgUrl);
     showResult(bars, imgUrl);
-    setStatus('');
+    status('');
   } catch (e) {
-    setStatus(e.message, true);
+    status(e.message, 'err');
   } finally {
     document.getElementById('goBtn').disabled = false;
   }
@@ -171,117 +382,76 @@ function extractBars(imgUrl) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-
     img.onload = () => {
       const W = img.naturalWidth, H = img.naturalHeight;
-      const canvas = document.getElementById('canvas');
-      canvas.width = W; canvas.height = H;
-      const ctx = canvas.getContext('2d');
+      const cv = document.getElementById('canvas');
+      cv.width = W; cv.height = H;
+      const ctx = cv.getContext('2d');
       ctx.drawImage(img, 0, 0);
-      const data = ctx.getImageData(0, 0, W, H).data;
-
-      // ── Threshold: pixels with R > 128 are "white" (bar/logo) ──
-      const isBright = (x, y) => data[(y * W + x) * 4] > 128;
-
-      // ── Find connected white regions (simplified connected-components) ──
-      // Build column-brightness profile first to locate objects
-      // Then for each object, find its bounding box via flood-fill seeds
-
-      // Step 1: build per-column bright-pixel count
+      const px = ctx.getImageData(0, 0, W, H).data;
+      const bright = (x, y) => px[(y * W + x) * 4] > 128;
       const colH = new Int32Array(W);
       for (let x = 0; x < W; x++)
         for (let y = 0; y < H; y++)
-          if (isBright(x, y)) colH[x]++;
-
-      // Step 2: find object column spans (runs of columns with bright pixels)
+          if (bright(x, y)) colH[x]++;
       const spans = [];
-      let inSpan = false, spanStart = 0;
+      let inS = false, s0 = 0;
       for (let x = 0; x < W; x++) {
-        if (colH[x] > 0 && !inSpan) { inSpan = true; spanStart = x; }
-        else if (colH[x] === 0 && inSpan) { inSpan = false; spans.push([spanStart, x - 1]); }
+        if (colH[x] > 0 && !inS) { inS = true; s0 = x; }
+        else if (colH[x] === 0 && inS) { inS = false; spans.push([s0, x - 1]); }
       }
-      if (inSpan) spans.push([spanStart, W - 1]);
-
-      // Step 3: for each span, measure the vertical extent of bright pixels
-      const objects = spans.map(([x0, x1]) => {
+      if (inS) spans.push([s0, W - 1]);
+      const objs = spans.map(([x0, x1]) => {
         let minY = H, maxY = 0;
         for (let x = x0; x <= x1; x++)
           for (let y = 0; y < H; y++)
-            if (isBright(x, y)) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-        return { x0, x1, minY, maxY, height: maxY - minY + 1, width: x1 - x0 + 1 };
-      });
-
-      // Sort by x position (left to right)
-      objects.sort((a, b) => a.x0 - b.x0);
-
-      // The first object is the Spotify logo (roughly square, tallest)
-      // Filter to only objects that look like bars or logo (not tiny noise)
-      const meaningful = objects.filter(o => o.height > H * 0.05 && o.width > 2);
-
-      if (meaningful.length < 24) {
-        reject(new Error(`Only found ${meaningful.length} objects — expected 24 (logo + 23 bars). Try again.`));
-        return;
+            if (bright(x, y)) { if (y < minY) minY = y; if (y > maxY) maxY = y; }
+        return { h: maxY - minY + 1, w: x1 - x0 + 1 };
+      }).filter(o => o.h > H * 0.05 && o.w > 2);
+      if (objs.length < 24) {
+        reject(new Error(`Found ${objs.length} objects, expected 24. Try a different link.`)); return;
       }
-
-      const logo = meaningful[0];
-      const maxHeight = logo.height; // logo diameter = tallest bar height
-
-      // Peter Boone's exact formula:
-      const sequence = meaningful.slice(1).map(bar => {
-        const ratio = (bar.height / maxHeight) * 8;
-        return Math.floor(ratio) - 1;
-      });
-
-      // Validate: should be exactly 23 bars, first=0, 12th=7, last=0
-      if (sequence.length !== 23) {
-        reject(new Error(`Got ${sequence.length} bars, expected 23. The image may not be a standard Spotify code.`));
-        return;
+      const logoH = objs[0].h;
+      const seq = objs.slice(1).map(o => Math.floor((o.h / logoH) * 8) - 1);
+      if (seq.length !== 23) { reject(new Error(`Got ${seq.length} bars, expected 23.`)); return; }
+      if (seq[0] !== 0 || seq[11] !== 7 || seq[22] !== 0) {
+        reject(new Error(`Reference bars wrong: [0]=${seq[0]}, [11]=${seq[11]}, [22]=${seq[22]}. Expected 0, 7, 0.`)); return;
       }
-      if (sequence[0] !== 0 || sequence[11] !== 7 || sequence[22] !== 0) {
-        reject(new Error(
-          `Reference bars don't match (pos 0=${sequence[0]}, pos 11=${sequence[11]}, pos 22=${sequence[22]}).\n` +
-          `Expected 0, 7, 0. The link may not be supported.`
-        ));
-        return;
-      }
-
-      resolve(sequence);
+      resolve(seq);
     };
-
-    img.onerror = () => reject(new Error(
-      'Could not load the Spotify code image.\n' +
-      'This can happen with some browsers due to CORS. Try Chrome or Firefox.'
-    ));
+    img.onerror = () => reject(new Error('Image failed to load. Try Chrome or Firefox.'));
     img.src = imgUrl;
   });
 }
 
 function showResult(bars, imgUrl) {
-  document.getElementById('codeBlock').textContent = `BAR_HEIGHTS = [${bars.join(', ')}];`;
-  document.getElementById('resultBox').style.display = 'block';
+  const digits = bars.join('');
+  document.getElementById('digitsOnly').textContent = digits;
 
-  // Preview image (normal black-on-white)
   const prev = document.getElementById('previewImg');
   prev.src = imgUrl.replace('/000000/white/', '/ffffff/black/');
   document.getElementById('previewBox').style.display = 'block';
 
-  // Mini bar visualisation
-  const viz = document.getElementById('barsViz');
+  const viz = document.getElementById('viz');
   viz.innerHTML = '';
   bars.forEach(h => {
-    const bar = document.createElement('div');
-    bar.className = 'bar-v';
-    bar.style.height = ((h + 1) / 8 * 100) + '%';
-    viz.appendChild(bar);
+    const b = document.createElement('div');
+    b.className = 'viz-bar';
+    b.style.height = ((h + 1) / 8 * 100) + '%';
+    viz.appendChild(b);
   });
+
+  document.getElementById('resultStep').style.display = 'block';
+  document.getElementById('resultStep').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function copyResult() {
-  navigator.clipboard.writeText(document.getElementById('codeBlock').textContent).then(() => {
-    const btn = document.getElementById('copyBtn');
-    btn.textContent = '✓ Copied!';
+function copyText(valueId, btnId) {
+  const text = document.getElementById(valueId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById(btnId);
+    btn.innerHTML = '✓ Copied';
     btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy to clipboard'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(() => { btn.innerHTML = '📋 Copy'; btn.classList.remove('copied'); }, 2000);
   });
 }
 
